@@ -44,12 +44,17 @@ impl<C: Config, SERVER: DisplayServer> Manager<C, SERVER> {
         let after_first_loop: Once = Once::new();
         let mut event_buffer: Vec<DisplayEvent> = vec![];
         while self.should_keep_running(&mut state_socket).await {
+            tracing::trace!("manager update");
             self.update_manager_state(&mut state_socket).await;
+            tracing::trace!("server flush");
             self.display_server.flush();
 
+            tracing::trace!("tokio select"); 
             let response: EventResponse = tokio::select! {
                 () = self.display_server.wait_readable(), if event_buffer.is_empty() => {
+                    tracing::trace!("add events");
                     self.add_events(&mut event_buffer);
+                    tracing::trace!("add events fin");
                     continue;
                 }
                 // When a mouse button is pressed or enter/motion notifies are blocked and only appear
@@ -58,19 +63,37 @@ impl<C: Config, SERVER: DisplayServer> Manager<C, SERVER> {
                 () = timeout(100), if event_buffer.is_empty()
                     && self.state.focus_manager.sloppy_mouse_follows_focus
                     && self.state.focus_manager.behaviour.is_sloppy() => {
+                        tracing::trace!("focus refresh");
                         self.refresh_focus(&mut event_buffer);
+                        tracing::trace!("focus refresh end");
                         continue;
                     }
-                Some(cmd) = command_pipe.read_command(), if event_buffer.is_empty() => self.execute_command(&cmd),
-                else => self.execute_display_events(&mut event_buffer),
+                Some(cmd) = command_pipe.read_command(), if event_buffer.is_empty() => {
+                    tracing::trace!("cmd exec");
+                    let ret = self.execute_command(&cmd);
+                    tracing::trace!("cmd exec fin");
+                    ret
+                },
+                else => {
+                    tracing::trace!("exec events");
+                    let ret = self.execute_display_events(&mut event_buffer);
+                    tracing::trace!("exec events fin");
+                    ret
+                },
             };
 
             match response {
-                EventResponse::None => (),
-                EventResponse::DisplayRefreshNeeded => self.refresh_display(),
+                EventResponse::None => tracing::trace!("no refresh"),
+                EventResponse::DisplayRefreshNeeded => {
+                    tracing::trace!("refresh start");
+                    self.refresh_display();
+                    tracing::trace!("refresh fin");
+                }
             };
 
+            tracing::trace!("execute actions");
             self.execute_actions(&mut event_buffer);
+            tracing::trace!("execute actions fin");
 
             // We need to run once through all of the loop to properly initialize the state
             // before we can restore the previous state
@@ -79,7 +102,11 @@ impl<C: Config, SERVER: DisplayServer> Manager<C, SERVER> {
             });
 
             if self.reap_requested.swap(false, Ordering::SeqCst) {
+                tracing::trace!("reap start");
                 self.children.remove_finished_children();
+                tracing::trace!("reap fin");
+            } else {
+                tracing::trace!("no reap");
             }
         }
 
@@ -105,7 +132,9 @@ impl<C: Config, SERVER: DisplayServer> Manager<C, SERVER> {
         let mut display_needs_refresh = false;
 
         event_buffer.drain(..).for_each(|event: DisplayEvent| {
+            tracing::trace!("<+- DisplayEvent process: {:?}", event);
             display_needs_refresh = self.display_event_handler(event) || display_needs_refresh;
+            tracing::trace!("+-- DisplayEvent fin");
         });
 
         if display_needs_refresh {

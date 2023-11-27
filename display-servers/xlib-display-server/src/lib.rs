@@ -74,7 +74,7 @@ impl DisplayServer for XlibDisplayServer {
             let xlib_event = self.xw.get_next_event();
             let event = XEvent(&mut self.xw, xlib_event).into();
             if let Some(e) = event {
-                tracing::trace!("DisplayEvent: {:?}", e);
+                tracing::trace!("- < DisplayEvent send: {:?}", e);
                 events.push(e);
             }
         }
@@ -89,7 +89,7 @@ impl DisplayServer for XlibDisplayServer {
     }
 
     fn execute_action(&mut self, act: DisplayAction) -> Option<DisplayEvent> {
-        tracing::trace!("DisplayAction: {:?}", act);
+        tracing::trace!("-+> DisplayAction process: {:?}", act);
         let xw = &mut self.xw;
         let event: Option<DisplayEvent> = match act {
             DisplayAction::KillWindow(h) => from_kill_window(xw, h),
@@ -116,8 +116,10 @@ impl DisplayServer for XlibDisplayServer {
             DisplayAction::FocusWindowUnderCursor => from_focus_window_under_cursor(xw),
             DisplayAction::NormalMode => from_normal_mode(xw),
         };
-        if event.is_some() {
-            tracing::trace!("DisplayEvent: {:?}", event);
+        if let Some(ev) = &event {
+            tracing::trace!("--< DisplayEvent return: {:?}", ev);
+        } else {
+            tracing::trace!("--+ DisplayEvent fin");
         }
         event
     }
