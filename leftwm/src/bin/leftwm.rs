@@ -4,7 +4,6 @@
 //! `leftwm-{check, command, state, theme}` as specified, and passes along any extra arguments.
 
 use clap::command;
-use leftwm::utils::log::setup_logging;
 use leftwm_core::child_process::{self, Nanny};
 use std::env;
 use std::path::Path;
@@ -154,8 +153,6 @@ fn get_current_exe() -> std::path::PathBuf {
 
 /// The main-entry-point. The leftwm-session is prepared here
 fn start_leftwm() {
-    setup_logging();
-
     let current_exe = get_current_exe();
 
     set_env_vars();
@@ -168,24 +165,18 @@ fn start_leftwm() {
     let mut error_occured = false;
     let mut session_exit_status: Option<ExitStatus> = None;
     while !error_occured {
-        tracing::trace!("leftwm-worker started");
         let mut leftwm_session = start_leftwm_session(&current_exe);
         #[cfg(feature = "lefthk")]
         let mut lefthk_session = start_lefthk_session(&current_exe);
 
         while session_is_running(&mut leftwm_session) {
             // remove all child processes which finished
-            tracing::trace!("removing children");
             children.remove_finished_children();
-            tracing::trace!("removing children fin");
 
             while is_suspending(&flag) {
-                tracing::trace!("watchdog suspending");
                 nix::unistd::pause();
-                tracing::trace!("watchdog suspending fin");
             }
         }
-        tracing::trace!("leftwm-worker stopped");
 
         // we don't want a rougue lefthk session so we kill it when the leftwm one ended
         #[cfg(feature = "lefthk")]
