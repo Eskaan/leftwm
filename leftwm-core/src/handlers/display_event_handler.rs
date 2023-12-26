@@ -33,6 +33,7 @@ impl<C: Config, SERVER: DisplayServer> Manager<C, SERVER> {
 }
 
 fn from_window_take_focus(state: &mut State, handle: WindowHandle) -> bool {
+    tracing::debug!("Window take focus {handle:?}");
     state.focus_window(&handle);
     false
 }
@@ -93,6 +94,7 @@ fn from_change_to_normal_mode(state: &mut State) -> bool {
                 let act = DisplayAction::SetWindowTag(window.handle, tag);
                 state.actions.push_back(act);
             }
+            tracing::debug!("From change to normal {h:?}");
             state.focus_window(&h);
         }
         _ => {}

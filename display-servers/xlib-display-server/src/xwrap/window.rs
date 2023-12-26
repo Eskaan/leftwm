@@ -296,6 +296,7 @@ impl XWrap {
     /// Unfocuses all windows.
     // `XSetInputFocus`: https://tronche.com/gui/x/xlib/input/XSetInputFocus.html
     pub fn unfocus(&self, handle: Option<WindowHandle>, floating: bool) {
+        tracing::debug!("Unfocused all");
         if let Some(WindowHandle::XlibHandle(handle)) = handle {
             let color = if floating {
                 self.colors.floating
@@ -310,7 +311,8 @@ impl XWrap {
             (self.xlib.XSetInputFocus)(
                 self.display,
                 self.root,
-                xlib::RevertToPointerRoot,
+                xlib::RevertToNone,
+                //xlib::RevertToPointerRoot,
                 xlib::CurrentTime,
             );
             self.replace_property_long(

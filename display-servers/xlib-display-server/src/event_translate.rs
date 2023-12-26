@@ -166,6 +166,7 @@ fn from_enter_notify(x_event: &XEvent) -> Option<DisplayEvent> {
     }
 
     let h = event.window.into();
+    tracing::debug!("WindowTakeFocus {h:?} from enter notify");
     Some(DisplayEvent::WindowTakeFocus(h))
 }
 

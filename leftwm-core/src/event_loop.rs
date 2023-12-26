@@ -105,6 +105,7 @@ impl<C: Config, SERVER: DisplayServer> Manager<C, SERVER> {
         let mut display_needs_refresh = false;
 
         event_buffer.drain(..).for_each(|event: DisplayEvent| {
+            tracing::trace!("DisplayEvent: {:?}", event);
             display_needs_refresh = self.display_event_handler(event) || display_needs_refresh;
         });
 
@@ -156,6 +157,7 @@ impl<C: Config, SERVER: DisplayServer> Manager<C, SERVER> {
     fn execute_actions(&mut self, event_buffer: &mut Vec<DisplayEvent>) {
         while !self.state.actions.is_empty() {
             if let Some(act) = self.state.actions.pop_front() {
+                tracing::trace!("DisplayAction: {:?}", act);
                 if let Some(event) = self.display_server.execute_action(act) {
                     event_buffer.push(event);
                 }

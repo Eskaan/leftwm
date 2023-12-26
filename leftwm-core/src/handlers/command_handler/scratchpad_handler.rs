@@ -31,7 +31,7 @@ fn hide_scratchpad<C: Config, SERVER: DisplayServer>(
     manager: &mut Manager<C, SERVER>,
     scratchpad_window: &WindowHandle,
 ) -> Result<(), &'static str> {
-    tracing::trace!("Hide scratchpad window {:?}", scratchpad_window);
+    tracing::debug!("Hide scratchpad window {:?}", scratchpad_window);
     let nsp_tag = manager
         .state
         .tags
@@ -103,7 +103,7 @@ fn show_scratchpad<C: Config, SERVER: DisplayServer>(
     manager: &mut Manager<C, SERVER>,
     scratchpad_window: &WindowHandle,
 ) -> Result<(), &'static str> {
-    tracing::trace!("Show scratchpad window {:?}", scratchpad_window);
+    tracing::debug!("Show scratchpad window {:?}", scratchpad_window);
     let current_tag = &manager
         .state
         .focus_manager
@@ -208,6 +208,7 @@ pub fn toggle_scratchpad<C: Config, SERVER: DisplayServer>(
     name: &ScratchPadName,
 ) -> Option<bool> {
     let current_tag = &manager.state.focus_manager.tag(0)?;
+    tracing::debug!("Curent tag (sp): {current_tag}");
     let scratchpad = manager
         .state
         .scratchpads
@@ -227,6 +228,7 @@ pub fn toggle_scratchpad<C: Config, SERVER: DisplayServer>(
                 .find(|w| w.pid == Some(first_in_scratchpad))
                 .map(|w| (w.has_tag(current_tag), w.handle))
             {
+                tracing::debug!("Sp is visible: {is_visible}");
                 let action_result = if is_visible {
                     // Window is visible => Hide the scratchpad.
                     hide_scratchpad(manager, &window_handle)

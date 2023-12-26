@@ -2,6 +2,7 @@ use crate::{models::TagId, state::State};
 
 impl State {
     pub fn goto_tag_handler(&mut self, tag_id: TagId) -> Option<bool> {
+        tracing::debug!("Goto tag {tag_id}");
         if tag_id > self.tags.len_normal() || tag_id < 1 {
             return Some(false);
         }

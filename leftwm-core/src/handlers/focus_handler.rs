@@ -35,6 +35,7 @@ impl State {
 
         // Make sure the focused window's tag is focused.
         if let Some(tag) = window.tag {
+            tracing::debug!("Focus window {tag} {handle:?}");
             _ = self.focus_tag_work(tag);
         }
     }
@@ -43,8 +44,10 @@ impl State {
     // NOTE: Should only be called externally from this file.
     pub fn focus_workspace(&mut self, workspace: &Workspace) {
         if self.focus_workspace_work(workspace.id) {
+            tracing::debug!("Focus workspace");
             // Make sure this workspaces tag is focused.
             workspace.tag.iter().for_each(|t| {
+                tracing::debug!("Focus workspace {t}");
                 self.focus_tag_work(*t);
 
                 if let Some(handle) = self.focus_manager.tags_last_window.get(t).copied() {
@@ -59,6 +62,7 @@ impl State {
     /// Focuses the given tag.
     // NOTE: Should only be called externally from this file.
     pub fn focus_tag(&mut self, tag: &TagId) {
+        tracing::debug!("Focus tag: {tag}");
         if !self.focus_tag_work(*tag) {
             return;
         }
@@ -75,8 +79,9 @@ impl State {
         // Make sure the focused window is on this workspace.
         if self.focus_manager.behaviour.is_sloppy() && self.focus_manager.sloppy_mouse_follows_focus
         {
-            let act = DisplayAction::FocusWindowUnderCursor;
-            self.actions.push_back(act);
+            tracing::debug!("Supressed focus under cursor");
+            //let act = DisplayAction::FocusWindowUnderCursor;
+            //self.actions.push_back(act);
         } else if let Some(handle) = self.focus_manager.tags_last_window.get(tag).copied() {
             self.focus_window_work(&handle);
         } else if let Some(ws) = to_focus.first() {
@@ -93,7 +98,8 @@ impl State {
         // Unfocus last window if the target tag is empty
         if let Some(window) = self.focus_manager.window(&self.windows) {
             if window.tag != Some(*tag) {
-                self.unfocus_current_window();
+                tracing::debug!("Suppressed unfocus");
+                //self.unfocus_current_window();
             }
         }
     }
@@ -171,6 +177,7 @@ impl State {
     }
 
     fn focus_tag_work(&mut self, tag: TagId) -> bool {
+        tracing::debug!("Focus tag work: {tag}");
         if let Some(current_tag) = self.focus_manager.tag(0) {
             if current_tag == tag {
                 return false;
@@ -188,9 +195,10 @@ impl State {
 
     fn focus_window_work(&mut self, handle: &WindowHandle) -> Option<Window> {
         if self.screens.iter().any(|s| &s.root == handle) {
-            let act = DisplayAction::Unfocus(None, false);
+            tracing::debug!("Suppressed unfocus from focus window");
+            /*let act = DisplayAction::Unfocus(None, false);
             self.actions.push_back(act);
-            self.focus_manager.window_history.push_front(None);
+            self.focus_manager.window_history.push_front(None);*/
             return None;
         }
         // Find the handle in our managed windows.

@@ -68,6 +68,7 @@ impl DisplayServer for XlibDisplayServer {
 
     fn update_workspaces(&self, focused: Option<&Workspace>) {
         if let Some(focused) = focused {
+            tracing::debug!("Set desktop by ws: {:?}", focused.tag);
             self.xw.set_current_desktop(focused.tag);
         }
     }
@@ -80,7 +81,6 @@ impl DisplayServer for XlibDisplayServer {
             let xlib_event = self.xw.get_next_event();
             let event = XEvent(&mut self.xw, xlib_event).into();
             if let Some(e) = event {
-                tracing::trace!("DisplayEvent: {:?}", e);
                 events.push(e);
             }
         }
@@ -95,7 +95,6 @@ impl DisplayServer for XlibDisplayServer {
     }
 
     fn execute_action(&mut self, act: DisplayAction) -> Option<DisplayEvent> {
-        tracing::trace!("DisplayAction: {:?}", act);
         let xw = &mut self.xw;
         let event: Option<DisplayEvent> = match act {
             DisplayAction::KillWindow(h) => from_kill_window(xw, h),
@@ -336,6 +335,7 @@ fn from_ready_to_resize_window(xw: &mut XWrap, handle: WindowHandle) -> Option<D
 }
 
 fn from_set_current_tags(xw: &mut XWrap, tag: Option<TagId>) -> Option<DisplayEvent> {
+    tracing::debug!("Set desktop: {tag:?}");
     xw.set_current_desktop(tag);
     None
 }
@@ -361,19 +361,23 @@ fn from_window_take_focus(
     window: &Window,
     previous_window: &Option<Window>,
 ) -> Option<DisplayEvent> {
+    tracing::debug!("From take focus {window:?}");
     xw.window_take_focus(window, previous_window.as_ref());
     None
 }
 
 fn from_focus_window_under_cursor(xw: &mut XWrap) -> Option<DisplayEvent> {
     if let Ok(mut window) = xw.get_cursor_window() {
+        tracing::debug!("Focus window to {window:?}");
         if window == WindowHandle::XlibHandle(0) {
             window = xw.get_default_root_handle();
         }
+        tracing::debug!("Moving focusV2 to {window:?}");
         return Some(DisplayEvent::WindowTakeFocus(window));
     }
     let point = xw.get_cursor_point().ok()?;
     let evt = DisplayEvent::MoveFocusTo(point.0, point.1);
+    tracing::debug!("Moving focus to {point:?}");
     Some(evt)
 }
 

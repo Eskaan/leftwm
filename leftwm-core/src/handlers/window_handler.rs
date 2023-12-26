@@ -397,7 +397,7 @@ fn setup_window(
     // May have been set by a predefined tag.
     if window.tag.is_none() {
         window.tag =
-            find_terminal(state, window.pid).map_or_else(|| ws.tag, |terminal| terminal.tag);
+            find_terminal(state, window.pid).map_or_else(|| {tracing::debug!("Using ws tag for new window: {}", ws.tag.unwrap());ws.tag}, |terminal| terminal.tag);
     }
     *on_same_tag = ws.tag == window.tag;
     *layout = state

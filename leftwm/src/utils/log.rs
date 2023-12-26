@@ -25,7 +25,7 @@ pub fn setup_logging() {
 #[allow(clippy::let_and_return)]
 fn get_subscribers() -> impl Subscriber {
     let env_filter = EnvFilter::builder()
-        .with_default_directive(LevelFilter::DEBUG.into())
+        .with_default_directive(LevelFilter::TRACE.into())
         .from_env_lossy();
 
     let subscriber = tracing_subscriber::registry().with(env_filter);

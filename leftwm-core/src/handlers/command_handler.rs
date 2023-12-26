@@ -348,7 +348,10 @@ fn goto_tag(state: &mut State, input_tag: TagId, current_tag_swap: bool) -> Opti
     } else {
         input_tag
     };
-    state.goto_tag_handler(destination_tag)
+    tracing::debug!("Goto tag handler: {destination_tag}");
+    let ret = state.goto_tag_handler(destination_tag);
+    tracing::debug!("Gone to tag: {}", state.focus_manager.tag(0).unwrap());
+    ret
 }
 
 fn return_to_last_tag(state: &mut State) -> Option<bool> {
